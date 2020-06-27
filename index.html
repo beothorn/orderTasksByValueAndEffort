@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ortasks</title>
+</head>
+<style>
+#add-tasks{
+    display: grid;
+}
+#add-tasks-buttons{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+#sort-tasks-by-value{
+    display: none;
+}
+#sort-tasks-by-value-buttons{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+#sort-tasks-by-effort{
+    display: none;
+}
+#sort-tasks-by-effort-buttons{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+
+</style>
+<body>
+
+<div id="add-tasks">
+    <h1>Add Tasks</h1>
+    <input id="task-description" type="text" value="Next task">
+    <div id="add-tasks-buttons"><button id="next-task">Add task</button><button id="finished-adding-task">Sort tasks</button></div>
+</div>
+
+<div id="sort-tasks-by-value">
+    <h1>Which task is more valuable</h1>
+    <p id="task-a-value">Task A</p>
+    <p>Task B</p>
+    <div id="sort-tasks-by-value-buttons"><button id="first-one-value">First one</button><button id="second-one-value">Second one</button></div>
+</div>
+
+<div id="sort-tasks-by-effort">
+    <h1>Which task takes more effort</h1>
+    <p >Task A</p>
+    <p>Task B</p>
+    <div id="sort-tasks-by-effort-buttons"><button id="first-one-effort">First one</button><button id="second-one-effort">Second one</button></div>
+</div>
+
+<script>
+
+//order valueWeigthOrder * value + effortValueOrder * effort
+
+const hide = (el) => document.getElementById(el).style.display = "none"
+const show = (el) => document.getElementById(el).style.display = "grid"
+
+const tasks = []
+let valueWeigth = 1
+let effortWeigth = 1
+
+document.getElementById("next-task").addEventListener("click", ()=>{
+    const taskDescription = document.getElementById("task-description")
+    const value = taskDescription.value
+    taskDescription.value = ""
+    tasks.push({
+        "description": value,
+        "effort": 0,
+        "value": 0,
+        "random": Math.random()
+    })
+})
+
+document.getElementById("finished-adding-task").addEventListener("click", ()=>{
+    tasks.sort((a, b) => a.random - b.random)
+    hide("add-tasks")
+    show("sort-tasks-by-value")
+    console.log(tasks)
+})
+
+</script>
+
+</body>
+</html>
