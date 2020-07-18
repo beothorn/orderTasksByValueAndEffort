@@ -136,8 +136,10 @@ const nextStepOrderByValue = () => {
         return
     }
     let currentContext = byValueQuickSort[0]
+    console.log(currentContext)
     let j = currentContext.j
     let hi = currentContext.hi
+    let i = currentContext.i
     if(j < hi){
         compareByValue(tasksOrderedByValue[i], tasksOrderedByValue[hi])    
     }else{
@@ -145,12 +147,12 @@ const nextStepOrderByValue = () => {
         tasksOrderedByValue[hi] = tasksOrderedByValue[i]
         tasksOrderedByValue[i] = tmp
 
-        let contextSolved = currentContext.pop()
+        let contextSolved = byValueQuickSort.pop()
         if(contextSolved.hi - contextSolved.lo == 1){
-            if(tasksOrderedByValue[hi] < tasksOrderedByValue[lo]){
-                let tmp = tasksOrderedByValue[hi]
-                tasksOrderedByValue[hi] = tasksOrderedByValue[lo]
-                tasksOrderedByValue[lo] = tmp
+            if(tasksOrderedByValue[contextSolved.hi] < tasksOrderedByValue[contextSolved.lo]){
+                let tmp = tasksOrderedByValue[contextSolved.hi]
+                tasksOrderedByValue[contextSolved.hi] = tasksOrderedByValue[contextSolved.lo]
+                tasksOrderedByValue[contextSolved.lo] = tmp
             }
             nextStepOrderByValue()
             return
@@ -161,7 +163,7 @@ const nextStepOrderByValue = () => {
     }
 }
 
-document.getElementById("task-a-value").addEventListener("click", ()=>{
+document.getElementById("task-b-value").addEventListener("click", ()=>{
     let currentContext = byValueQuickSort[0]
     let j = currentContext.j
     currentContext.j += 1
@@ -170,7 +172,7 @@ document.getElementById("task-a-value").addEventListener("click", ()=>{
     nextStepOrderByValue()
 //     else nextStepOrderByEffort()
 })
-document.getElementById("task-b-value").addEventListener("click", ()=>{
+document.getElementById("task-a-value").addEventListener("click", ()=>{
     let currentContext = byValueQuickSort[0]
     let i = currentContext.i
     let j = currentContext.j
@@ -190,13 +192,6 @@ const compareByEffort = (taskA, taskB) => {
     document.getElementById("task-b-effort").textContent = taskB.description
     show("sort-tasks-by-effort")
 }
-
-document.getElementById("task-a-value").addEventListener("click", ()=>{
-    console.log("Task A is more valuable")
-})
-document.getElementById("task-b-value").addEventListener("click", ()=>{
-    console.log("Task B is more valuable")
-})
 
 document.getElementById("next-task").addEventListener("click", ()=>{
     const taskDescription = document.getElementById("task-description")
