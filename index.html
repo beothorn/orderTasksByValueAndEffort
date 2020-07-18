@@ -137,11 +137,12 @@ const nextStepOrderByValue = () => {
     }
     let currentContext = byValueQuickSort[0]
     console.log(currentContext)
+    console.log(tasksOrderedByValue)
     let j = currentContext.j
     let hi = currentContext.hi
     let i = currentContext.i
     if(j < hi){
-        compareByValue(tasksOrderedByValue[i], tasksOrderedByValue[hi])    
+        compareByValue(tasksOrderedByValue[j], tasksOrderedByValue[hi])    
     }else{
         let tmp = tasksOrderedByValue[hi]
         tasksOrderedByValue[hi] = tasksOrderedByValue[i]
