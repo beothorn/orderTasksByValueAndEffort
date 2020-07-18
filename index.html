@@ -92,12 +92,15 @@ const show = (screenId) => {
     document.getElementById(screenId).style.display = "grid"
 }
 
-var tasks = []
-var tasksOrderedByValue = []//0 is more valuable
-var tasksOrderedByEffort = []//0 is less effort
+let tasks = []
+let tasksOrderedByValue = []//0 is more valuable
+let tasksOrderedByEffort = []//0 is less effort
 
 let valueWeigth = 1
 let effortWeigth = 1
+
+let byValueQuickSort = []
+let byEffortQuickSort = []
 
 const reRenderTasks = () => {
     const taskList = document.getElementById("add-tasks-list")
@@ -126,11 +129,60 @@ const compareByValue = (taskA, taskB) => {
     show("sort-tasks-by-value")
 }
 
+const nextStepOrderByValue = () => {
+    if(byValueQuickSort.length == 0){
+        console.log("DONE")
+        console.log(tasksOrderedByValue)
+        return
+    }
+    let currentContext = byValueQuickSort[0]
+    let j = currentContext.j
+    let hi = currentContext.hi
+    if(j < hi){
+        compareByValue(tasksOrderedByValue[i], tasksOrderedByValue[hi])    
+    }else{
+        let tmp = tasksOrderedByValue[hi]
+        tasksOrderedByValue[hi] = tasksOrderedByValue[i]
+        tasksOrderedByValue[i] = tmp
+
+        let contextSolved = currentContext.pop()
+        if(contextSolved.hi - contextSolved.lo == 1){
+            if(tasksOrderedByValue[hi] < tasksOrderedByValue[lo]){
+                let tmp = tasksOrderedByValue[hi]
+                tasksOrderedByValue[hi] = tasksOrderedByValue[lo]
+                tasksOrderedByValue[lo] = tmp
+            }
+            nextStepOrderByValue()
+            return
+        }
+        let newPivot = Math.floor( (contextSolved.hi + contextSolved.lo) / 2 )
+        byValueQuickSort.push({"lo":contextSolved.lo, "hi":newPivot -1, "i": 0, "j": 0})
+        byValueQuickSort.push({"lo": newPivot, "hi":contextSolved.hi, "i": 0, "j": 0})
+    }
+}
+
 document.getElementById("task-a-value").addEventListener("click", ()=>{
-    console.log("Task A is more valuable")
+    let currentContext = byValueQuickSort[0]
+    let j = currentContext.j
+    currentContext.j += 1
+    //random chance for next sort step so it doesnt get boring
+    //if 50% chance do
+    nextStepOrderByValue()
+//     else nextStepOrderByEffort()
 })
 document.getElementById("task-b-value").addEventListener("click", ()=>{
-    console.log("Task B is more valuable")
+    let currentContext = byValueQuickSort[0]
+    let i = currentContext.i
+    let j = currentContext.j
+    currentContext.j += 1
+    let tmp = tasksOrderedByValue[j]
+    tasksOrderedByValue[j] = tasksOrderedByValue[i]
+    tasksOrderedByValue[i] = tmp
+    currentContext.i += 1
+    //random chance for next sort step so it doesnt get boring
+    //if 50% chance do
+    nextStepOrderByValue()
+//     else nextStepOrderByEffort()
 })
 
 const compareByEffort = (taskA, taskB) => {
@@ -164,8 +216,9 @@ document.getElementById("finished-adding-task").addEventListener("click", ()=>{
     tasksOrderedByValue = [...tasks]
     tasksOrderedByEffort = [...tasks]
     console.log(tasks)
-    //compareByEffort(tasksOrderedByValue[0], tasksOrderedByValue[1])
-    show("decide-weights")
+    byValueQuickSort = [{"lo":0, "hi":tasks.length -1, "i": 0, "j": 0}]
+    byEffortQuickSort = [{"lo":0, "hi":tasks.length -1, "i": 0, "j": 0}]
+    nextStepOrderByValue()
 })
 
 </script>
