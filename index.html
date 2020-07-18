@@ -6,6 +6,12 @@
     <title>Ortasks</title>
 </head>
 <style>
+
+*{
+    margin: 0;
+    padding: 0;
+}
+
 #add-tasks{
     display: grid;
 }
@@ -17,53 +23,128 @@
 #sort-tasks-by-value{
     display: none;
 }
-#sort-tasks-by-value-buttons{
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-}
 
 #sort-tasks-by-effort{
     display: none;
 }
-#sort-tasks-by-effort-buttons{
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+
+#decide-weights{
+    display: none;
 }
 
+#decide-weights-range{
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    text-align: center;
+}
+
+.add-tasks-list-item{
+    display: grid;
+    grid-template-columns: 4fr 1fr;
+}
 
 </style>
 <body>
 
-<div id="add-tasks">
+<div id="add-tasks" class="screen">
     <h1>Add Tasks</h1>
     <input id="task-description" type="text" value="Next task">
     <div id="add-tasks-buttons"><button id="next-task">Add task</button><button id="finished-adding-task">Sort tasks</button></div>
+    <div id="add-tasks-list">
+    </div>
 </div>
 
-<div id="sort-tasks-by-value">
-    <h1>Which task is more valuable</h1>
-    <p id="task-a-value">Task A</p>
-    <p>Task B</p>
-    <div id="sort-tasks-by-value-buttons"><button id="first-one-value">First one</button><button id="second-one-value">Second one</button></div>
+<div id="sort-tasks-by-value" class="screen">
+    <h1>Which task is more valuable?</h1>
+    <p><a id="task-a-value" href="#">Task A</a></p>
+    <p><a id="task-b-value" href="#">Task B</a></p>
 </div>
 
-<div id="sort-tasks-by-effort">
-    <h1>Which task takes more effort</h1>
-    <p >Task A</p>
-    <p>Task B</p>
-    <div id="sort-tasks-by-effort-buttons"><button id="first-one-effort">First one</button><button id="second-one-effort">Second one</button></div>
+<div id="sort-tasks-by-effort" class="screen">
+    <h1>Which task takes more effort?</h1>
+    <p><a id="task-a-effort" href="#">Task A</a></p>
+    <p><a id="task-b-effort" href="#">Task B</a></p>
+</div>
+
+<div id="decide-weights" class="screen">
+    <h1>What do you prefer?</h1>
+    <div id="decide-weights-range">
+    More Value
+    <input type="range" id="weights" name="weights" min="0" max="10">
+    LessEffort
+    </div>
+    <button>Show results!</button>
+</div>
+
+<div id="results" class="screen">
+    <div id="ordered-tasks-list">
+    </div>
 </div>
 
 <script>
 
 //order valueWeigthOrder * value + effortValueOrder * effort
 
-const hide = (el) => document.getElementById(el).style.display = "none"
-const show = (el) => document.getElementById(el).style.display = "grid"
+const show = (screenId) => {
+    for(s of Array.from(document.getElementsByClassName("screen"))){
+        s.style.display = "none"
+    }
+    document.getElementById(screenId).style.display = "grid"
+}
 
-const tasks = []
+var tasks = []
+var tasksOrderedByValue = []//0 is more valuable
+var tasksOrderedByEffort = []//0 is less effort
+
 let valueWeigth = 1
 let effortWeigth = 1
+
+const reRenderTasks = () => {
+    const taskList = document.getElementById("add-tasks-list")
+    taskList.innerHTML = ''
+    for(task of tasks){
+        const div = document.createElement("div")
+        div.classList.add("add-tasks-list-item")
+        const span = document.createElement("span")
+        span.textContent = task.description
+        div.appendChild(span)
+        const button = document.createElement("button")
+        button.textContent = "Delete"
+        let description = task.description
+        button.addEventListener("click", ()=>{
+           tasks = tasks.filter(t => t.description != description)
+           reRenderTasks()
+        })
+        div.appendChild(button)
+        taskList.appendChild(div)
+    }
+}
+
+const compareByValue = (taskA, taskB) => {
+    document.getElementById("task-a-value").textContent = taskA.description
+    document.getElementById("task-b-value").textContent = taskB.description
+    show("sort-tasks-by-value")
+}
+
+document.getElementById("task-a-value").addEventListener("click", ()=>{
+    console.log("Task A is more valuable")
+})
+document.getElementById("task-b-value").addEventListener("click", ()=>{
+    console.log("Task B is more valuable")
+})
+
+const compareByEffort = (taskA, taskB) => {
+    document.getElementById("task-a-effort").textContent = taskA.description
+    document.getElementById("task-b-effort").textContent = taskB.description
+    show("sort-tasks-by-effort")
+}
+
+document.getElementById("task-a-value").addEventListener("click", ()=>{
+    console.log("Task A is more valuable")
+})
+document.getElementById("task-b-value").addEventListener("click", ()=>{
+    console.log("Task B is more valuable")
+})
 
 document.getElementById("next-task").addEventListener("click", ()=>{
     const taskDescription = document.getElementById("task-description")
@@ -75,13 +156,16 @@ document.getElementById("next-task").addEventListener("click", ()=>{
         "value": 0,
         "random": Math.random()
     })
+    reRenderTasks()
 })
 
 document.getElementById("finished-adding-task").addEventListener("click", ()=>{
     tasks.sort((a, b) => a.random - b.random)
-    hide("add-tasks")
-    show("sort-tasks-by-value")
+    tasksOrderedByValue = [...tasks]
+    tasksOrderedByEffort = [...tasks]
     console.log(tasks)
+    //compareByEffort(tasksOrderedByValue[0], tasksOrderedByValue[1])
+    show("decide-weights")
 })
 
 </script>
