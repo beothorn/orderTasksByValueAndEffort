@@ -73,7 +73,7 @@
     <input type="range" id="weights" name="weights" min="0" max="10">
     LessEffort
     </div>
-    <button>Show results!</button>
+    <button id="show-results">Show results!</button>
 </div>
 
 <div id="results" class="screen">
@@ -92,6 +92,8 @@ const show = (screenId) => {
     document.getElementById(screenId).style.display = "grid"
 }
 
+const getRandomItem = (arr) => arr[Math.floor(Math.random() * arr.length)]
+
 let tasks = []
 let tasksOrderedByValue = []//0 is more valuable
 let tasksOrderedByEffort = []//0 is less effort
@@ -99,8 +101,9 @@ let tasksOrderedByEffort = []//0 is less effort
 let valueWeigth = 1
 let effortWeigth = 1
 
-let byValueQuickSort = []
-let byEffortQuickSort = []
+let contexts = []
+
+var currentContext
 
 const reRenderTasks = () => {
     const taskList = document.getElementById("add-tasks-list")
@@ -124,77 +127,90 @@ const reRenderTasks = () => {
 }
 
 const compareByValue = (taskA, taskB) => {
-    document.getElementById("task-a-value").textContent = taskA.description
-    document.getElementById("task-b-value").textContent = taskB.description
+    document.getElementById("task-a-value").textContent = tasksOrderedByValue[taskA].description
+    document.getElementById("task-b-value").textContent = tasksOrderedByValue[taskB].description
     show("sort-tasks-by-value")
 }
 
-const nextStepOrderByValue = () => {
-    if(byValueQuickSort.length == 0){
-        console.log("DONE")
-        console.log(tasksOrderedByValue)
-        return
-    }
-    let currentContext = byValueQuickSort[0]
-    console.log(currentContext)
-    console.log(tasksOrderedByValue)
-    let j = currentContext.j
-    let hi = currentContext.hi
-    let i = currentContext.i
-    if(j < hi){
-        compareByValue(tasksOrderedByValue[j], tasksOrderedByValue[hi])    
-    }else{
-        let tmp = tasksOrderedByValue[hi]
-        tasksOrderedByValue[hi] = tasksOrderedByValue[i]
-        tasksOrderedByValue[i] = tmp
-
-        let contextSolved = byValueQuickSort.pop()
-        if(contextSolved.hi - contextSolved.lo == 1){
-            if(tasksOrderedByValue[contextSolved.hi] < tasksOrderedByValue[contextSolved.lo]){
-                let tmp = tasksOrderedByValue[contextSolved.hi]
-                tasksOrderedByValue[contextSolved.hi] = tasksOrderedByValue[contextSolved.lo]
-                tasksOrderedByValue[contextSolved.lo] = tmp
-            }
-            nextStepOrderByValue()
-            return
-        }
-        let newPivot = Math.floor( (contextSolved.hi + contextSolved.lo) / 2 )
-        byValueQuickSort.push({"lo":contextSolved.lo, "hi":newPivot -1, "i": 0, "j": 0})
-        byValueQuickSort.push({"lo": newPivot, "hi":contextSolved.hi, "i": 0, "j": 0})
-    }
-}
-
-document.getElementById("task-b-value").addEventListener("click", ()=>{
-    let currentContext = byValueQuickSort[0]
-    let j = currentContext.j
-    currentContext.j += 1
-    //random chance for next sort step so it doesnt get boring
-    //if 50% chance do
-    nextStepOrderByValue()
-//     else nextStepOrderByEffort()
-})
-document.getElementById("task-a-value").addEventListener("click", ()=>{
-    let currentContext = byValueQuickSort[0]
-    let i = currentContext.i
-    let j = currentContext.j
-    currentContext.j += 1
-    let tmp = tasksOrderedByValue[j]
-    tasksOrderedByValue[j] = tasksOrderedByValue[i]
-    tasksOrderedByValue[i] = tmp
-    currentContext.i += 1
-    //random chance for next sort step so it doesnt get boring
-    //if 50% chance do
-    nextStepOrderByValue()
-//     else nextStepOrderByEffort()
-})
-
 const compareByEffort = (taskA, taskB) => {
-    document.getElementById("task-a-effort").textContent = taskA.description
-    document.getElementById("task-b-effort").textContent = taskB.description
+    document.getElementById("task-a-effort").textContent = tasksOrderedByEffort[taskA].description
+    document.getElementById("task-b-effort").textContent = tasksOrderedByEffort[taskB].description
     show("sort-tasks-by-effort")
 }
 
-document.getElementById("next-task").addEventListener("click", ()=>{
+const nextStep = () => {
+    if(contexts.length == 0){
+        console.log("DONE")
+        console.log(tasksOrderedByValue)
+        console.log(tasksOrderedByEffort)
+        show("decide-weights")
+        return
+    }
+    currentContext = getRandomItem(contexts)
+    let notYetComparedToPivotIndex = currentContext.notYetComparedToPivotIndex
+    let end = currentContext.end
+    let firstBiggerThanPivot = currentContext.firstBiggerThanPivot
+    let tasksOrdered
+    let compare
+    if(currentContext.sorting == "value"){
+        tasksOrdered = tasksOrderedByValue
+        compare = compareByValue
+    }else{
+        tasksOrdered = tasksOrderedByEffort
+        compare = compareByEffort
+    }
+
+    if(notYetComparedToPivotIndex < end){
+        compare(notYetComparedToPivotIndex, end)
+    }else{
+        let tmp = tasksOrdered[end]
+        tasksOrdered[end] = tasksOrdered[firstBiggerThanPivot]
+        tasksOrdered[firstBiggerThanPivot] = tmp
+
+        let contextSolved = currentContext
+        contexts = contexts.filter(c => c != currentContext)
+        if(contextSolved.end - contextSolved.start == 1){
+            if(tasksOrdered[contextSolved.end] < tasksOrdered[contextSolved.start]){
+                let tmp = tasksOrdered[contextSolved.end]
+                tasksOrdered[contextSolved.end] = tasksOrdered[contextSolved.start]
+                tasksOrdered[contextSolved.start] = tmp
+            }
+            nextStep()
+            return
+        }
+        let newPivot = Math.floor( (contextSolved.start + contextSolved.end) / 2 )
+        contexts.push({"sorting": contextSolved.sorting, "start":contextSolved.start, "end":newPivot, "firstBiggerThanPivot": 0, "notYetComparedToPivotIndex": 0})
+        contexts.push({"sorting": contextSolved.sorting, "start":newPivot + 1, "end":contextSolved.end, "firstBiggerThanPivot": newPivot, "notYetComparedToPivotIndex": newPivot})
+    }
+}
+
+const pivotIsSmaller = ()=>{
+    currentContext.notYetComparedToPivotIndex += 1
+    nextStep()
+}
+
+const pivotIsBigger = ()=>{
+    let aValueIndex = currentContext.firstBiggerThanPivot
+    let notYetComparedToPivotIndex = currentContext.notYetComparedToPivotIndex
+    currentContext.notYetComparedToPivotIndex += 1
+    if(currentContext.sorting == "value"){
+        tasksOrdered = tasksOrderedByValue
+    }else{
+        tasksOrdered = tasksOrderedByEffort
+    }
+    let tmp = tasksOrdered[notYetComparedToPivotIndex]
+    tasksOrdered[notYetComparedToPivotIndex] = tasksOrdered[aValueIndex]
+    tasksOrdered[aValueIndex] = tmp
+    currentContext.firstBiggerThanPivot+= 1
+    nextStep()
+}
+
+document.getElementById("task-a-value").addEventListener("click", pivotIsSmaller)
+document.getElementById("task-a-effort").addEventListener("click", pivotIsSmaller)
+document.getElementById("task-b-value").addEventListener("click", pivotIsBigger)
+document.getElementById("task-b-effort").addEventListener("click", pivotIsBigger)
+
+const addTask = () => {
     const taskDescription = document.getElementById("task-description")
     const value = taskDescription.value
     taskDescription.value = ""
@@ -205,16 +221,54 @@ document.getElementById("next-task").addEventListener("click", ()=>{
         "random": Math.random()
     })
     reRenderTasks()
-})
+}
+
+document.getElementById("next-task").addEventListener("click", addTask)
+
+document.getElementById("task-description").addEventListener("keyup", (event) => {
+  if (event.keyCode === 13) {
+    event.preventDefault();
+    document.getElementById("next-task").click();
+  }
+});
 
 document.getElementById("finished-adding-task").addEventListener("click", ()=>{
     tasks.sort((a, b) => a.random - b.random)
     tasksOrderedByValue = [...tasks]
     tasksOrderedByEffort = [...tasks]
     console.log(tasks)
-    byValueQuickSort = [{"lo":0, "hi":tasks.length -1, "i": 0, "j": 0}]
-    byEffortQuickSort = [{"lo":0, "hi":tasks.length -1, "i": 0, "j": 0}]
-    nextStepOrderByValue()
+    contexts = [
+        {"sorting":"value", "start":0, "end":tasks.length -1, "firstBiggerThanPivot": 0, "notYetComparedToPivotIndex": 0},
+        {"sorting":"effort", "start":0, "end":tasks.length -1, "firstBiggerThanPivot": 0, "notYetComparedToPivotIndex": 0}
+    ]
+    nextStep()
+})
+
+
+document.getElementById("show-results").addEventListener("click", ()=>{
+    for(let i = 0; i < tasksOrderedByValue.length; i++){
+        tasksOrderedByValue[i].value = i
+    }
+    for(let i = 0; i < tasksOrderedByValue.length; i++){
+        tasksOrderedByEffort[i].effort = (tasksOrderedByEffort.length -1) - i
+    }
+    const valueWeigth = 1
+    const effortWeigth = 1
+
+    tasks.sort((a, b) => (b.value * valueWeigth + b.effort * effortWeigth) - (a.value * valueWeigth + a.effort * effortWeigth))
+    
+    const taskList = document.getElementById("ordered-tasks-list")
+    taskList.innerHTML = ''
+    for(task of tasks){
+        const div = document.createElement("div")
+        const span = document.createElement("span")
+        span.textContent = task.description
+        div.appendChild(span)
+        let description = task.description
+        taskList.appendChild(div)
+    }
+    console.log(tasks)
+    show("results")
 })
 
 </script>
