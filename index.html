@@ -10,26 +10,59 @@
 *{
     margin: 0;
     padding: 0;
+    color: #343434;
 }
 
-#add-tasks{
-    display: grid;
+body{
+    background: #f1f1f1;
 }
+
+a{
+    cursor: default;
+    text-decoration: none;
+}
+
+#container{
+    border-radius: 1em;
+    background: #f1f1f1;
+    box-shadow: 20px 20px 60px #cdcdcd, -20px -20px 60px #ffffff;
+    padding: 1em;
+    margin: 2em;
+}
+
+.btn{
+    cursor: default;
+    border-radius: 0.4em;
+    background: #f1f1f1;
+    box-shadow: 4px 2px 5px #cdcdcd, 0px -4px 6px #ffffff;
+    margin: 0.5em;
+    padding: 0.5em;
+    text-align: center;
+}
+
+h1{
+    border-radius: 0.2em;
+    background: #f1f1f1;
+    box-shadow: inset 3px 2px 5px #cdcdcd, inset -3px -1px 15px #ffffff;
+    margin: 0.2em;
+    padding: 0.3em;
+    color: #343434;
+}
+
+input[type=text], select {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 0px;
+    border-radius: 4px;
+    box-sizing: border-box;
+    box-shadow: inset 3px 2px 5px #cdcdcd, inset -3px -1px 15px #ffffff;
+}
+
 #add-tasks-buttons{
     display: grid;
     grid-template-columns: 1fr 1fr;
-}
-
-#sort-tasks-by-value{
-    display: none;
-}
-
-#sort-tasks-by-effort{
-    display: none;
-}
-
-#decide-weights{
-    display: none;
 }
 
 #decide-weights-range{
@@ -38,33 +71,41 @@
     text-align: center;
 }
 
+#ordered-tasks-list{
+    text-align: center;
+}
+
 .add-tasks-list-item{
     display: grid;
     grid-template-columns: 4fr 1fr;
+    align-items: center;
 }
 
 </style>
 <body>
 <!-- https://codepen.io/tirsolecointere/details/BayJqzG -->
-
+<div id="container">
 <div id="add-tasks" class="screen">
     <h1>Add Tasks</h1>
     <input id="task-description" type="text" value="Next task">
-    <div id="add-tasks-buttons"><button id="next-task">Add task</button><button id="finished-adding-task">Sort tasks</button></div>
+    <div id="add-tasks-buttons">
+        <span id="next-task" class="btn">Add task</span>
+        <span id="finished-adding-task" class="btn">Sort tasks</span>
+    </div>
     <div id="add-tasks-list">
     </div>
 </div>
 
 <div id="sort-tasks-by-value" class="screen">
     <h1>Which task is more valuable?</h1>
-    <p><a id="task-a-value" href="#">Task A</a></p>
-    <p><a id="task-b-value" href="#">Task B</a></p>
+    <span id="task-a-value" class="btn">Task A</span>
+    <span id="task-b-value" class="btn">Task B</span>
 </div>
 
 <div id="sort-tasks-by-effort" class="screen">
     <h1>Which task takes more effort?</h1>
-    <p><a id="task-a-effort" href="#">Task A</a></p>
-    <p><a id="task-b-effort" href="#">Task B</a></p>
+    <span id="task-a-effort" class="btn">Task A</span>
+    <span id="task-b-effort" class="btn">Task B</span>
 </div>
 
 <div id="decide-weights" class="screen">
@@ -74,19 +115,20 @@
     <input type="range" id="weights" name="weights" min="0" max="10">
     LessEffort
     </div>
-    <button id="show-results">Show results!</button>
+    <span id="show-results" class="btn">Show results!</span>
 </div>
 
 <div id="results" class="screen">
-    <div id="ordered-tasks-list">
+    <h1>This is the order you should do the tasks:</h1>
+    <div id="ordered-tasks-list">foo
     </div>
+</div>
 </div>
 
 <script>
 
-//order valueWeigthOrder * value + effortValueOrder * effort
-
 const show = (screenId) => {
+    console.log("Show screen: " + screenId)
     for(s of Array.from(document.getElementsByClassName("screen"))){
         s.style.display = "none"
     }
@@ -115,10 +157,12 @@ const reRenderTasks = () => {
         const span = document.createElement("span")
         span.textContent = task.description
         div.appendChild(span)
-        const button = document.createElement("button")
+        const button = document.createElement("a")
         button.textContent = "Delete"
+        button.classList.add("btn")
         let description = task.description
         button.addEventListener("click", ()=>{
+           console.log("Removed task: " + JSON.stringify(task))
            tasks = tasks.filter(t => t.description != description)
            reRenderTasks()
         })
@@ -128,83 +172,136 @@ const reRenderTasks = () => {
 }
 
 const compareByValue = (taskA, taskB) => {
+    console.log("compare value of tasksOrderedByValue["+taskA+"] and tasksOrderedByValue["+taskB+"]")
+    console.log("CompareValue: '"+tasksOrderedByValue[taskA].description+"' vs '"+tasksOrderedByValue[taskB].description+"'")
     document.getElementById("task-a-value").textContent = tasksOrderedByValue[taskA].description
     document.getElementById("task-b-value").textContent = tasksOrderedByValue[taskB].description
     show("sort-tasks-by-value")
 }
 
 const compareByEffort = (taskA, taskB) => {
+    console.log("compare effort of tasksOrderedByValue["+taskA+"] and tasksOrderedByValue["+taskB+"]")
+    console.log("CompareEffort: '"+tasksOrderedByEffort[taskA].description+"' vs '"+tasksOrderedByEffort[taskB].description+"'")
     document.getElementById("task-a-effort").textContent = tasksOrderedByEffort[taskA].description
     document.getElementById("task-b-effort").textContent = tasksOrderedByEffort[taskB].description
     show("sort-tasks-by-effort")
 }
 
+const compareTest = (taskA, taskB) => {
+    if(tasksOrderedByValue[taskA] > tasksOrderedByValue[taskB]){
+        pivotIsSmaller()
+    }else{
+        pivotIsBigger()
+    }
+}
+
 const nextStep = () => {
+    document.getElementById("task-a-effort").textContent = "EMPTY"
+    document.getElementById("task-b-effort").textContent = "EMPTY"
+    document.getElementById("task-a-value").textContent = "EMPTY"
+    document.getElementById("task-b-value").textContent = "EMPTY"
     if(contexts.length == 0){
-        console.log("DONE")
-        console.log(tasksOrderedByValue)
-        console.log(tasksOrderedByEffort)
+        console.log("No more contexts to process")
+        console.log("tasksOrderedByValue is: [" + (tasksOrderedByValue.map(t=>t.description).join(", ")) + "]")
+        console.log("tasksOrderedByEffort is: [" + (tasksOrderedByEffort.map(t=>t.description).join(", ")) + "]")
         show("decide-weights")
         return
     }
     currentContext = getRandomItem(contexts)
-    console.log(currentContext)
+    console.log("Next step ====")
+    console.log("Current context: "+JSON.stringify(currentContext))
+
     let notYetComparedToPivotIndex = currentContext.notYetComparedToPivotIndex
-    let end = currentContext.end
-    let firstBiggerThanPivot = currentContext.firstBiggerThanPivot
+    let pivotAtEndIndex = currentContext.pivotAtEndIndex
+    let lastLesserThanPivotIndex = currentContext.lastLesserThanPivotIndex
     let tasksOrdered
     let compare
     if(currentContext.sorting == "value"){
         tasksOrdered = tasksOrderedByValue
         compare = compareByValue
-    }else{
+    }else if (currentContext.sorting == "effort"){
         tasksOrdered = tasksOrderedByEffort
         compare = compareByEffort
-    }
-
-    if(notYetComparedToPivotIndex < end){
-        compare(notYetComparedToPivotIndex, end)
     }else{
-        let tmp = tasksOrdered[end]
-        tasksOrdered[end] = tasksOrdered[firstBiggerThanPivot]
-        tasksOrdered[firstBiggerThanPivot] = tmp
+        tasksOrdered = tasksOrderedByValue
+        compare = compareTest
+    }
+    console.log("Tasks are: [" + (tasksOrdered.map(t=>t.description).join(", ")) + "]")
+
+    if(notYetComparedToPivotIndex < pivotAtEndIndex){
+        compare(notYetComparedToPivotIndex, pivotAtEndIndex)
+    }else{
+        if(tasksOrdered[lastLesserThanPivotIndex] < tasksOrdered[pivotAtEndIndex]){
+            let tmp = tasksOrdered[pivotAtEndIndex]
+            tasksOrdered[pivotAtEndIndex] = tasksOrdered[lastLesserThanPivotIndex + 1]
+            tasksOrdered[lastLesserThanPivotIndex + 1] = tmp    
+            console.log("Swaped " + (lastLesserThanPivotIndex + 1) + " with "+ pivotAtEndIndex)
+        }
+        
 
         let contextSolved = currentContext
         contexts = contexts.filter(c => c != currentContext)
-        if(contextSolved.end - contextSolved.start == 1){
-            if(tasksOrdered[contextSolved.end] < tasksOrdered[contextSolved.start]){
-                let tmp = tasksOrdered[contextSolved.end]
-                tasksOrdered[contextSolved.end] = tasksOrdered[contextSolved.start]
-                tasksOrdered[contextSolved.start] = tmp
-            }
+
+        if(contextSolved.pivotAtEndIndex - contextSolved.start < 2){
             nextStep()
-            return
+        } else {
+            let newPivot = Math.floor( (contextSolved.start + contextSolved.pivotAtEndIndex) / 2 )
+            contexts.push({
+                "sorting": contextSolved.sorting, 
+                "start": contextSolved.start, 
+                "pivotAtEndIndex": newPivot - 1, 
+                "lastLesserThanPivotIndex": contextSolved.start, 
+                "notYetComparedToPivotIndex": contextSolved.start
+            })
+            contexts.push({
+                "sorting": contextSolved.sorting, 
+                "start": newPivot + 1, 
+                "pivotAtEndIndex": contextSolved.pivotAtEndIndex, 
+                "lastLesserThanPivotIndex": newPivot, 
+                "notYetComparedToPivotIndex": newPivot
+            })
+            nextStep()
         }
-        let newPivot = Math.floor( (contextSolved.start + contextSolved.end) / 2 )
-        contexts.push({"sorting": contextSolved.sorting, "start":contextSolved.start, "end":newPivot, "firstBiggerThanPivot": 0, "notYetComparedToPivotIndex": 0})
-        contexts.push({"sorting": contextSolved.sorting, "start":newPivot + 1, "end":contextSolved.end, "firstBiggerThanPivot": newPivot, "notYetComparedToPivotIndex": newPivot})
-        nextStep()
     }
 }
 
 const pivotIsSmaller = ()=>{
+    console.log("Pivot (" + currentContext.pivotAtEndIndex + ") is smaller")
     currentContext.notYetComparedToPivotIndex += 1
-    nextStep()
-}
-
-const pivotIsBigger = ()=>{
-    let aValueIndex = currentContext.firstBiggerThanPivot
-    let notYetComparedToPivotIndex = currentContext.notYetComparedToPivotIndex
+    console.log("Increased currentContext.notYetComparedToPivotIndex to " + currentContext.notYetComparedToPivotIndex)
+    let tasksOrdered
     if(currentContext.sorting == "value"){
         tasksOrdered = tasksOrderedByValue
     }else{
         tasksOrdered = tasksOrderedByEffort
     }
-    let tmp = tasksOrdered[notYetComparedToPivotIndex]
-    tasksOrdered[notYetComparedToPivotIndex] = tasksOrdered[aValueIndex]
-    tasksOrdered[aValueIndex] = tmp
+    console.log("Tasks are: [" + (tasksOrdered.map(t=>t.description).join(", ")) + "]")
+    nextStep()
+}
+
+const pivotIsBigger = ()=>{
+    console.log("Pivot (" + currentContext.pivotAtEndIndex + ") is bigger")
+    let aValueIndex = currentContext.lastLesserThanPivotIndex + 1
+    let currentComparingWith = currentContext.notYetComparedToPivotIndex
+    let tasksOrdered
+    if(currentContext.sorting == "value"){
+        tasksOrdered = tasksOrderedByValue
+    }else{
+        tasksOrdered = tasksOrderedByEffort
+    }
+    if(currentContext.lastLesserThanPivotIndex != currentComparingWith){
+        let tmp = tasksOrdered[currentComparingWith]
+        tasksOrdered[currentComparingWith] = tasksOrdered[aValueIndex]
+        tasksOrdered[aValueIndex] = tmp
+        currentContext.lastLesserThanPivotIndex += 1
+        console.log("Swaped " + currentComparingWith + " with "+ aValueIndex)    
+    }
     currentContext.notYetComparedToPivotIndex += 1
-    currentContext.firstBiggerThanPivot+= 1
+    
+
+    console.log("Increased currentContext.notYetComparedToPivotIndex to " + currentContext.notYetComparedToPivotIndex)
+    console.log("Increased currentContext.lastLesserThanPivotIndex to " + currentContext.lastLesserThanPivotIndex)
+    console.log("Tasks are: [" + (tasksOrdered.map(t=>t.description).join(", ")) + "]")
     nextStep()
 }
 
@@ -213,16 +310,20 @@ document.getElementById("task-a-effort").addEventListener("click", pivotIsBigger
 document.getElementById("task-b-value").addEventListener("click", pivotIsSmaller)
 document.getElementById("task-b-effort").addEventListener("click", pivotIsSmaller)
 
+const newTask = (description) => ({
+    "description": description,
+    "effort": 0,
+    "value": 0,
+    "random": Math.random()
+})
+
 const addTask = () => {
     const taskDescription = document.getElementById("task-description")
     const value = taskDescription.value
     taskDescription.value = ""
-    tasks.push({
-        "description": value,
-        "effort": 0,
-        "value": 0,
-        "random": Math.random()
-    })
+    let task = newTask(value)
+    tasks.push(task)
+    console.log("Added task: "+JSON.stringify(task))
     reRenderTasks()
 }
 
@@ -239,11 +340,11 @@ document.getElementById("finished-adding-task").addEventListener("click", ()=>{
     tasks.sort((a, b) => a.random - b.random)
     tasksOrderedByValue = [...tasks]
     tasksOrderedByEffort = [...tasks]
-    tasks.forEach(t => console.log(t.description))
+    console.log("Tasks are: [" + (tasks.map(t=>t.description).join(", ")) + "]")
     
     contexts = [
-        {"sorting":"value", "start":0, "end":tasks.length -1, "firstBiggerThanPivot": 0, "notYetComparedToPivotIndex": 0},
-        {"sorting":"effort", "start":0, "end":tasks.length -1, "firstBiggerThanPivot": 0, "notYetComparedToPivotIndex": 0}
+        {"sorting":"value", "start":0, "pivotAtEndIndex":tasks.length -1, "lastLesserThanPivotIndex": 0, "notYetComparedToPivotIndex": 0},
+        {"sorting":"effort", "start":0, "pivotAtEndIndex":tasks.length -1, "lastLesserThanPivotIndex": 0, "notYetComparedToPivotIndex": 0}
     ]
     nextStep()
 })
@@ -259,8 +360,15 @@ document.getElementById("show-results").addEventListener("click", ()=>{
     const range = parseInt(document.getElementById("weights").value) // 10 less effort ,0  more value
     const valueWeigth = 1 - (range/10)
     const effortWeigth = (range/10)
+    console.log("Score is value * valueWeigth + effort * effortWeigth")
+    console.log("Priority goes from smaller to biggest")
+    console.log("valueWeigth is " + valueWeigth)
+    console.log("effortWeigth is " + effortWeigth)
 
-    tasks.sort((a, b) => (a.value * valueWeigth + a.effort * effortWeigth) - (b.value * valueWeigth + b.effort * effortWeigth))
+    tasks.forEach(t => t.score = t.value * valueWeigth + t.effort * effortWeigth)
+    tasks.sort((a, b) => a.score - b.score)
+
+    console.log("Final tasks ordered is: [" + (tasks.map(t=> JSON.stringify(t)).join(", ")) + "]")
     
     const taskList = document.getElementById("ordered-tasks-list")
     taskList.innerHTML = ''
@@ -275,6 +383,25 @@ document.getElementById("show-results").addEventListener("click", ()=>{
     console.log(tasks)
     show("results")
 })
+
++(() => {
+    console.log("test")
+    tasks = [newTask(1), newTask(4), newTask(5), newTask(3), newTask(2), newTask(6)]
+    tasksOrderedByValue = [...tasks]
+    tasksOrderedByEffort = [...tasks]
+    
+    contexts = [
+        {"sorting":"test", "start":0, "pivotAtEndIndex":tasks.length -1, "lastLesserThanPivotIndex": 0, "notYetComparedToPivotIndex": 0}
+    ]
+
+    nextStep()
+
+    tasks = []
+    tasksOrderedByValue = []
+    tasksOrderedByEffort = []
+})()
+
+show("add-tasks")
 
 </script>
 
