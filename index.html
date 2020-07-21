@@ -197,7 +197,8 @@ const compareByEffort = (taskA, taskB) => {
 }
 
 const compareTest = (taskA, taskB) => {
-    if(tasksOrderedByValue[taskA] > tasksOrderedByValue[taskB]){
+    console.log("Comparing tasks["+taskA+"] = "+tasksOrderedByValue[taskA].description+" with pivot tasks["+taskB+"] = "+tasksOrderedByValue[taskB].description)
+    if(tasksOrderedByValue[taskA].description > tasksOrderedByValue[taskB].description){
         pivotIsSmaller()
     }else{
         pivotIsBigger()
@@ -219,10 +220,11 @@ const nextStep = () => {
     currentContext = getRandomItem(contexts)
     console.log("Next step ====")
     console.log("Current context: "+JSON.stringify(currentContext))
+    if(currentContext.pivotAtEndIndex <= currentContext.start) return
 
     let notYetComparedToPivotIndex = currentContext.notYetComparedToPivotIndex
     let pivotAtEndIndex = currentContext.pivotAtEndIndex
-    let lastLesserThanPivotIndex = currentContext.lastLesserThanPivotIndex
+    let firstBiggerThanPivotIndex = currentContext.firstBiggerThanPivotIndex
     let tasksOrdered
     let compare
     if(currentContext.sorting == "value"){
@@ -240,37 +242,47 @@ const nextStep = () => {
     if(notYetComparedToPivotIndex < pivotAtEndIndex){
         compare(notYetComparedToPivotIndex, pivotAtEndIndex)
     }else{
-        if(tasksOrdered[lastLesserThanPivotIndex] < tasksOrdered[pivotAtEndIndex]){
+        console.log("=========Finishing context")
+        let pivotFinalPosition = pivotAtEndIndex
+        if(currentContext.firstBiggerThanPivotIndex != pivotAtEndIndex){
+            console.log("Swapping "+tasksOrdered[pivotAtEndIndex].description+" at "+ pivotAtEndIndex + " with "+ tasksOrdered[firstBiggerThanPivotIndex].description +" at "+firstBiggerThanPivotIndex )
             let tmp = tasksOrdered[pivotAtEndIndex]
-            tasksOrdered[pivotAtEndIndex] = tasksOrdered[lastLesserThanPivotIndex + 1]
-            tasksOrdered[lastLesserThanPivotIndex + 1] = tmp    
-            console.log("Swaped " + (lastLesserThanPivotIndex + 1) + " with "+ pivotAtEndIndex)
+            tasksOrdered[pivotAtEndIndex] = tasksOrdered[firstBiggerThanPivotIndex]
+            tasksOrdered[firstBiggerThanPivotIndex] = tmp    
+            pivotFinalPosition = firstBiggerThanPivotIndex
+            
+            console.log("Pivot final position is "+pivotFinalPosition)
         }
         
 
         let contextSolved = currentContext
         contexts = contexts.filter(c => c != currentContext)
 
-        if(contextSolved.pivotAtEndIndex - contextSolved.start < 2){
-            nextStep()
-        } else {
-            let newPivot = Math.floor( (contextSolved.start + contextSolved.pivotAtEndIndex) / 2 )
-            contexts.push({
+        console.log("=========Context Finished")
+        console.log("Result = [" + (tasksOrdered.map(t=>t.description).join(", ")) + "]")        
+        if(pivotAtEndIndex > 0 && contextSolved.start < pivotFinalPosition - 1){
+            let newContextBeforePivot = {
                 "sorting": contextSolved.sorting, 
                 "start": contextSolved.start, 
-                "pivotAtEndIndex": newPivot - 1, 
-                "lastLesserThanPivotIndex": contextSolved.start, 
+                "pivotAtEndIndex": pivotFinalPosition - 1, 
+                "firstBiggerThanPivotIndex": contextSolved.start, 
                 "notYetComparedToPivotIndex": contextSolved.start
-            })
-            contexts.push({
-                "sorting": contextSolved.sorting, 
-                "start": newPivot + 1, 
-                "pivotAtEndIndex": contextSolved.pivotAtEndIndex, 
-                "lastLesserThanPivotIndex": newPivot, 
-                "notYetComparedToPivotIndex": newPivot
-            })
-            nextStep()
+            }
+            contexts.push(newContextBeforePivot)    
+            console.log("Added context before pivot "+JSON.stringify(newContextBeforePivot))
         }
+        if(pivotAtEndIndex < tasks.length - 1 && pivotFinalPosition + 1 < contextSolved.pivotAtEndIndex){
+            let newContextAfterPivot = {
+                "sorting": contextSolved.sorting, 
+                "start": pivotFinalPosition + 1, 
+                "pivotAtEndIndex": contextSolved.pivotAtEndIndex, 
+                "firstBiggerThanPivotIndex": pivotFinalPosition + 1, 
+                "notYetComparedToPivotIndex": pivotFinalPosition + 1
+            } 
+            contexts.push(newContextAfterPivot)
+            console.log("Added context after pivot "+JSON.stringify(newContextAfterPivot))
+        }
+        nextStep()
     }
 }
 
@@ -279,10 +291,10 @@ const pivotIsSmaller = ()=>{
     currentContext.notYetComparedToPivotIndex += 1
     console.log("Increased currentContext.notYetComparedToPivotIndex to " + currentContext.notYetComparedToPivotIndex)
     let tasksOrdered
-    if(currentContext.sorting == "value"){
-        tasksOrdered = tasksOrderedByValue
-    }else{
+    if(currentContext.sorting == "effort"){
         tasksOrdered = tasksOrderedByEffort
+    }else{
+        tasksOrdered = tasksOrderedByValue
     }
     console.log("Tasks are: [" + (tasksOrdered.map(t=>t.description).join(", ")) + "]")
     nextStep()
@@ -290,26 +302,25 @@ const pivotIsSmaller = ()=>{
 
 const pivotIsBigger = ()=>{
     console.log("Pivot (" + currentContext.pivotAtEndIndex + ") is bigger")
-    let aValueIndex = currentContext.lastLesserThanPivotIndex + 1
     let currentComparingWith = currentContext.notYetComparedToPivotIndex
     let tasksOrdered
-    if(currentContext.sorting == "value"){
-        tasksOrdered = tasksOrderedByValue
-    }else{
+    if(currentContext.sorting == "effort"){
         tasksOrdered = tasksOrderedByEffort
+    }else{
+        tasksOrdered = tasksOrderedByValue
     }
-    if(currentContext.lastLesserThanPivotIndex != currentComparingWith){
+    if(currentComparingWith != currentContext.firstBiggerThanPivotIndex){
+        console.log("Swapping "+tasksOrdered[currentComparingWith].description+" at "+ currentComparingWith + " with "+ tasksOrdered[currentContext.firstBiggerThanPivotIndex].description +" at "+currentContext.firstBiggerThanPivotIndex )
         let tmp = tasksOrdered[currentComparingWith]
-        tasksOrdered[currentComparingWith] = tasksOrdered[aValueIndex]
-        tasksOrdered[aValueIndex] = tmp
-        currentContext.lastLesserThanPivotIndex += 1
-        console.log("Swaped " + currentComparingWith + " with "+ aValueIndex)    
+        tasksOrdered[currentComparingWith] = tasksOrdered[currentContext.firstBiggerThanPivotIndex]
+        tasksOrdered[currentContext.firstBiggerThanPivotIndex] = tmp
     }
+     
     currentContext.notYetComparedToPivotIndex += 1
-    
+    currentContext.firstBiggerThanPivotIndex += 1
 
     console.log("Increased currentContext.notYetComparedToPivotIndex to " + currentContext.notYetComparedToPivotIndex)
-    console.log("Increased currentContext.lastLesserThanPivotIndex to " + currentContext.lastLesserThanPivotIndex)
+    console.log("Increased currentContext.firstBiggerThanPivotIndex to " + currentContext.firstBiggerThanPivotIndex)
     console.log("Tasks are: [" + (tasksOrdered.map(t=>t.description).join(", ")) + "]")
     nextStep()
 }
@@ -352,8 +363,8 @@ document.getElementById("finished-adding-task").addEventListener("click", ()=>{
     console.log("Tasks are: [" + (tasks.map(t=>t.description).join(", ")) + "]")
     
     contexts = [
-        {"sorting":"value", "start":0, "pivotAtEndIndex":tasks.length -1, "lastLesserThanPivotIndex": 0, "notYetComparedToPivotIndex": 0},
-        {"sorting":"effort", "start":0, "pivotAtEndIndex":tasks.length -1, "lastLesserThanPivotIndex": 0, "notYetComparedToPivotIndex": 0}
+        {"sorting":"value", "start":0, "pivotAtEndIndex":tasks.length -1, "firstBiggerThanPivotIndex": 0, "notYetComparedToPivotIndex": 0},
+        {"sorting":"effort", "start":0, "pivotAtEndIndex":tasks.length -1, "firstBiggerThanPivotIndex": 0, "notYetComparedToPivotIndex": 0}
     ]
     nextStep()
 })
@@ -393,14 +404,22 @@ document.getElementById("show-results").addEventListener("click", ()=>{
     show("results")
 })
 
-+(() => {
+let runTests = false
+if(runTests){ +(() => {
     console.log("test")
-    tasks = [newTask(1), newTask(4), newTask(5), newTask(3), newTask(2), newTask(6)]
+    tasks = [
+        newTask(1), 
+        newTask(4), 
+        newTask(5), 
+        newTask(3), 
+        newTask(2), 
+        newTask(6)
+    ]
     tasksOrderedByValue = [...tasks]
     tasksOrderedByEffort = [...tasks]
     
     contexts = [
-        {"sorting":"test", "start":0, "pivotAtEndIndex":tasks.length -1, "lastLesserThanPivotIndex": 0, "notYetComparedToPivotIndex": 0}
+        {"sorting":"test", "start":0, "pivotAtEndIndex":tasks.length -1, "firstBiggerThanPivotIndex": 0, "notYetComparedToPivotIndex": 0}
     ]
 
     nextStep()
@@ -409,6 +428,7 @@ document.getElementById("show-results").addEventListener("click", ()=>{
     tasksOrderedByValue = []
     tasksOrderedByEffort = []
 })()
+}
 
 show("add-tasks")
 
